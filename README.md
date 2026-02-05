@@ -1,0 +1,3 @@
+- npx supabase login
+- npx supabase init
+- npx supabase projects create scoreboard

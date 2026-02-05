@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus, RotateCcw } from 'lucide-react';
+import { supabase } from './supabaseClient';
 
 export default function JungleScoreboard() {
   const [scores, setScores] = useState({
@@ -15,6 +16,74 @@ export default function JungleScoreboard() {
     red: [],
     green: []
   });
+
+  const [loading, setLoading] = useState(true);
+
+  // Load initial scores from Supabase
+  useEffect(() => {
+    loadScores();
+  }, []);
+
+  // Subscribe to real-time changes
+  useEffect(() => {
+    // First, make sure we have initial scores
+    if (loading) return;
+
+    const channel = supabase
+      .channel('db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'scores'
+        },
+        (payload) => {
+          console.log('Change received!', payload);
+          
+          if (payload.eventType === 'UPDATE') {
+            setScores(prev => ({
+              ...prev,
+              [payload.new.team_id]: payload.new.score
+            }));
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime connected!');
+        }
+        if (err) {
+          console.error('❌ Realtime error:', err);
+        }
+      });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [loading]);
+
+  const loadScores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('team_id, score');
+
+      if (error) throw error;
+
+      // Convert array to object
+      const scoresObj = {};
+      data.forEach(item => {
+        scoresObj[item.team_id] = item.score;
+      });
+
+      setScores(scoresObj);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading scores:', error);
+      setLoading(false);
+    }
+  };
 
   const teams = [
     { 
@@ -59,10 +128,13 @@ export default function JungleScoreboard() {
     }
   ];
 
-  const addPoints = (teamId, points) => {
+  const addPoints = async (teamId, points) => {
+    const newScore = scores[teamId] + points;
+
+    // Optimistically update UI
     setScores(prev => ({
       ...prev,
-      [teamId]: prev[teamId] + points
+      [teamId]: newScore
     }));
 
     // Trigger animation
@@ -79,16 +151,54 @@ export default function JungleScoreboard() {
         [teamId]: prev[teamId].filter(anim => anim.id !== animId)
       }));
     }, 2500);
+
+    // Update Supabase
+    try {
+      const { error } = await supabase
+        .from('scores')
+        .update({ score: newScore, updated_at: new Date().toISOString() })
+        .eq('team_id', teamId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating score:', error);
+      // Revert on error
+      loadScores();
+    }
   };
 
-  const resetScores = () => {
+  const resetScores = async () => {
     if (window.confirm('Reset all scores to 0?')) {
+      // Optimistically update UI
       setScores({ blue: 0, yellow: 0, red: 0, green: 0 });
+
+      // Update Supabase
+      try {
+        const updates = ['blue', 'yellow', 'red', 'green'].map(teamId => 
+          supabase
+            .from('scores')
+            .update({ score: 0, updated_at: new Date().toISOString() })
+            .eq('team_id', teamId)
+        );
+
+        await Promise.all(updates);
+      } catch (error) {
+        console.error('Error resetting scores:', error);
+        // Reload on error
+        loadScores();
+      }
     }
   };
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 relative overflow-hidden">
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="text-white text-4xl font-bold">Loading scores... 🌴</div>
+        </div>
+      )}
+
       {/* Jungle background decorations */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 text-9xl">🌴</div>

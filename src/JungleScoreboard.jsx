@@ -55,10 +55,40 @@ export default function JungleScoreboard() {
           console.log('Change received!', payload);
           
           if (payload.eventType === 'UPDATE') {
+            const oldScore = scores[payload.new.team_id];
+            const newScore = payload.new.score;
+            const pointsChanged = newScore - oldScore;
+            
+            // Update score
             setScores(prev => ({
               ...prev,
-              [payload.new.team_id]: payload.new.score
+              [payload.new.team_id]: newScore
             }));
+            
+            // Trigger animation on ALL devices
+            if (pointsChanged !== 0) {
+              const animId = Date.now() + Math.random();
+              const randomX = (Math.random() - 0.5) * 200;
+              const randomY = (Math.random() - 0.5) * 100;
+              
+              setAnimations(prev => ({
+                ...prev,
+                [payload.new.team_id]: [...prev[payload.new.team_id], { 
+                  id: animId, 
+                  points: pointsChanged, 
+                  randomX, 
+                  randomY 
+                }]
+              }));
+              
+              // Remove animation after it completes
+              setTimeout(() => {
+                setAnimations(prev => ({
+                  ...prev,
+                  [payload.new.team_id]: prev[payload.new.team_id].filter(anim => anim.id !== animId)
+                }));
+              }, 2500);
+            }
           }
         }
       )
@@ -74,7 +104,7 @@ export default function JungleScoreboard() {
     return () => {
       channel.unsubscribe();
     };
-  }, [loading]);
+  }, [loading, scores]);
 
   const loadScores = async () => {
     try {
@@ -144,31 +174,7 @@ export default function JungleScoreboard() {
   const addPoints = async (teamId, points) => {
     const newScore = scores[teamId] + points;
 
-    // Optimistically update UI
-    setScores(prev => ({
-      ...prev,
-      [teamId]: newScore
-    }));
-
-    // Trigger animation with random position
-    const animId = Date.now() + Math.random(); // Ensure unique ID
-    const randomX = (Math.random() - 0.5) * 200; // Random X offset: -100px to +100px
-    const randomY = (Math.random() - 0.5) * 100; // Random Y offset: -50px to +50px
-    
-    setAnimations(prev => ({
-      ...prev,
-      [teamId]: [...prev[teamId], { id: animId, points, randomX, randomY }]
-    }));
-
-    // Remove animation after it completes
-    setTimeout(() => {
-      setAnimations(prev => ({
-        ...prev,
-        [teamId]: prev[teamId].filter(anim => anim.id !== animId)
-      }));
-    }, 2500);
-
-    // Update Supabase
+    // Update Supabase (realtime will trigger animations on all devices)
     try {
       const { error } = await supabase
         .from('scores')
@@ -178,7 +184,7 @@ export default function JungleScoreboard() {
       if (error) throw error;
     } catch (error) {
       console.error('Error updating score:', error);
-      // Revert on error
+      // Reload on error
       loadScores();
     }
   };
@@ -271,10 +277,13 @@ export default function JungleScoreboard() {
               {animations[team.id].map(anim => (
                 <div
                   key={anim.id}
-                  className="absolute top-1/2 left-1/2 pointer-events-none z-20"
+                  className="absolute pointer-events-none z-20"
                   style={{
+                    top: '50%',
+                    left: '50%',
                     animation: 'floatUp 2.5s ease-out forwards',
-                    transform: `translate(calc(-50% + ${anim.randomX}px), calc(-50% + ${anim.randomY}px))`
+                    '--random-x': `${anim.randomX}px`,
+                    '--random-y': `${anim.randomY}px`,
                   }}
                 >
                   <div className={`${isMobile ? 'text-4xl' : 'text-8xl'} font-bold ${anim.points > 0 ? 'text-green-600' : 'text-red-600'} drop-shadow-lg`}>
@@ -337,14 +346,14 @@ export default function JungleScoreboard() {
         @keyframes floatUp {
           0% {
             opacity: 1;
-            transform: translate(-50%, -50%) translateY(0) scale(1);
+            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(0) scale(1);
           }
           50% {
-            transform: translate(-50%, -50%) translateY(-80px) scale(1.3);
+            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(-80px) scale(1.3);
           }
           100% {
             opacity: 0;
-            transform: translate(-50%, -50%) translateY(-160px) scale(0.8);
+            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(-160px) scale(0.8);
           }
         }
       `}</style>

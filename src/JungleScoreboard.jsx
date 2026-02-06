@@ -146,8 +146,8 @@ export default function JungleScoreboard() {
       darkColor: 'bg-yellow-600',
       lightColor: 'bg-yellow-50',
       textColor: 'text-yellow-900',
-      animal: '🐵',
-      emoji: '🍌'
+      animal: '🦁',
+      emoji: '👑'
     },
     { 
       id: 'red', 
@@ -156,8 +156,8 @@ export default function JungleScoreboard() {
       darkColor: 'bg-red-700',
       lightColor: 'bg-red-50',
       textColor: 'text-red-900',
-      animal: '🦁',
-      emoji: '👑'
+      animal: '🐵',
+      emoji: '🍌'
     },
     { 
       id: 'green', 
@@ -213,56 +213,51 @@ export default function JungleScoreboard() {
   };
 
   return (
-    <div className="w-full h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 relative overflow-hidden">
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="text-white text-4xl font-bold">Loading scores... 🌴</div>
+    <div className="w-full relative overflow-hidden fixed inset-0" style={{ height: '100dvh' }}>
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900">
+        {/* Jungle background decorations */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 text-9xl">🌴</div>
+          <div className="absolute top-0 right-0 text-9xl">🌴</div>
+          <div className="absolute bottom-0 left-0 text-9xl">🌿</div>
+          <div className="absolute bottom-0 right-0 text-9xl">🌿</div>
         </div>
-      )}
-
-      {/* Jungle background decorations */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 text-9xl">🌴</div>
-        <div className="absolute top-0 right-0 text-9xl">🌴</div>
-        <div className="absolute bottom-0 left-0 text-9xl">🌿</div>
-        <div className="absolute bottom-0 right-0 text-9xl">🌿</div>
       </div>
 
       {/* Reset button */}
       <button
         onClick={resetScores}
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-semibold text-sm transition-all hover:scale-105"
+        className="fixed bottom-2 left-1/2 -translate-x-1/2 z-50 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-semibold text-sm transition-all hover:scale-105"
       >
         <RotateCcw size={16} />
         Reset All
       </button>
 
       {/* 2x2 Grid */}
-      <div className="grid grid-cols-2 grid-rows-2 h-full gap-2 p-2">
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-2 p-2">
         {teams.map((team, index) => (
           <div
             key={team.id}
-            className={`${team.lightColor} rounded-3xl shadow-2xl relative overflow-hidden border-4 border-white group`}
+            className={`${team.lightColor} rounded-3xl shadow-2xl relative overflow-hidden border-4 border-white group ${isMobile ? 'flex flex-col' : ''}`}
           >
             {/* Team header */}
-            <div className={`${team.color} ${isMobile ? 'py-2' : 'py-6'} relative`}>
-              <h2 className={`${isMobile ? 'text-xl' : 'text-4xl'} font-bold text-white text-center drop-shadow-lg`}>
+            <div className={`${team.color} ${isMobile ? 'py-1.5 flex-shrink-0' : 'py-6'} relative`}>
+              <h2 className={`${isMobile ? 'text-base' : 'text-4xl'} font-bold text-white text-center drop-shadow-lg`}>
                 {team.animal} {team.name} {team.emoji}
               </h2>
             </div>
 
-            {/* Score display - fills entire space */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            {/* Score display - fills space appropriately */}
+            <div className={`${isMobile ? 'flex-grow flex items-center justify-center relative min-h-0' : 'absolute inset-0 flex items-center justify-center'}`}>
               <div 
                 className={`font-black ${team.textColor} drop-shadow-md relative z-10 leading-none pointer-events-none`}
                 style={{ 
                   fontSize: isMobile 
                     ? (Math.abs(scores[team.id]) >= 100 
-                        ? 'clamp(4rem, 12vw, 8rem)' 
+                        ? 'clamp(3.5rem, 11vw, 7rem)' 
                         : Math.abs(scores[team.id]) >= 10 
-                        ? 'clamp(5rem, 15vw, 10rem)' 
-                        : 'clamp(6rem, 18vw, 12rem)')
+                        ? 'clamp(4.5rem, 13vw, 9rem)' 
+                        : 'clamp(5.5rem, 16vw, 11rem)')
                     : (Math.abs(scores[team.id]) >= 100 
                         ? 'clamp(10rem, 18vw, 18rem)' 
                         : Math.abs(scores[team.id]) >= 10 
@@ -279,11 +274,11 @@ export default function JungleScoreboard() {
                   key={anim.id}
                   className="absolute pointer-events-none z-20"
                   style={{
-                    top: '50%',
-                    left: '50%',
-                    animation: 'floatUp 2.5s ease-out forwards',
-                    '--random-x': `${anim.randomX}px`,
-                    '--random-y': `${anim.randomY}px`,
+                    top: `calc(50% + ${anim.randomY}px)`,
+                    left: `calc(50% + ${anim.randomX}px)`,
+                    transform: 'translate(-50%, -50%)',
+                    animation: 'floatUpSimple 2.5s ease-out forwards',
+                    willChange: 'transform, opacity',
                   }}
                 >
                   <div className={`${isMobile ? 'text-4xl' : 'text-8xl'} font-bold ${anim.points > 0 ? 'text-green-600' : 'text-red-600'} drop-shadow-lg`}>
@@ -297,40 +292,40 @@ export default function JungleScoreboard() {
             </div>
 
             {/* Control buttons - always visible on mobile, hover on desktop */}
-            <div className={`absolute inset-0 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-300 z-30 flex items-end justify-center ${isMobile ? 'pb-2' : 'pb-8'}`}>
-              <div className={`${isMobile ? 'w-full px-2' : 'w-11/12'}`}>
+            <div className={`${isMobile ? 'relative flex-shrink-0 p-2' : 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 flex items-end justify-center pb-8'}`}>
+              <div className={`${isMobile ? 'w-full' : 'w-11/12'}`}>
                 <div className={`grid grid-cols-3 ${isMobile ? 'gap-1 mb-1' : 'gap-4 mb-3'}`}>
                   <button
                     onClick={() => addPoints(team.id, 1)}
-                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-2 px-2 rounded-lg text-base' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 1
+                    <Plus size={isMobile ? 18 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 1
                   </button>
                   <button
                     onClick={() => addPoints(team.id, 5)}
-                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-2 px-2 rounded-lg text-base' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 5
+                    <Plus size={isMobile ? 18 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 5
                   </button>
                   <button
                     onClick={() => addPoints(team.id, 10)}
-                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-2 px-2 rounded-lg text-base' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 10
+                    <Plus size={isMobile ? 18 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 10
                   </button>
                 </div>
                 <div className={`grid grid-cols-2 ${isMobile ? 'gap-1' : 'gap-3'}`}>
                   <button
                     onClick={() => addPoints(team.id, -1)}
-                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-2 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
+                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-1.5 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
                   >
-                    <Minus size={isMobile ? 16 : 20} className="mr-1" /> 1
+                    <Minus size={isMobile ? 14 : 20} className="mr-0.5" /> 1
                   </button>
                   <button
                     onClick={() => addPoints(team.id, -5)}
-                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-2 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
+                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-1.5 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
                   >
-                    <Minus size={isMobile ? 16 : 20} className="mr-1" /> 5
+                    <Minus size={isMobile ? 14 : 20} className="mr-0.5" /> 5
                   </button>
                 </div>
               </div>
@@ -343,17 +338,17 @@ export default function JungleScoreboard() {
       </div>
 
       <style>{`
-        @keyframes floatUp {
+        @keyframes floatUpSimple {
           0% {
             opacity: 1;
-            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(0) scale(1);
+            transform: translate(-50%, -50%) translateY(0) scale(1);
           }
           50% {
-            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(-80px) scale(1.3);
+            transform: translate(-50%, -50%) translateY(-80px) scale(1.3);
           }
           100% {
             opacity: 0;
-            transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) translateY(-160px) scale(0.8);
+            transform: translate(-50%, -50%) translateY(-160px) scale(0.8);
           }
         }
       `}</style>

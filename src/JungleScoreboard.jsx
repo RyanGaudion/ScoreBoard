@@ -224,14 +224,16 @@ export default function JungleScoreboard() {
         </div>
       </div>
 
-      {/* Reset button */}
-      <button
-        onClick={resetScores}
-        className="fixed bottom-2 left-1/2 -translate-x-1/2 z-50 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-semibold text-sm transition-all hover:scale-105"
-      >
-        <RotateCcw size={16} />
-        Reset All
-      </button>
+      {/* Reset button - hide on mobile */}
+      {!isMobile &
+        <button
+            onClick={resetScores}
+            className="fixed bottom-2 left-1/2 -translate-x-1/2 z-50 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-semibold text-sm transition-all hover:scale-105"
+        >
+            <RotateCcw size={16} />
+            Reset All
+        </button>
+        }
 
       {/* 2x2 Grid */}
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-2 p-2">

@@ -18,6 +18,19 @@ export default function JungleScoreboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load initial scores from Supabase
   useEffect(() => {
@@ -137,11 +150,14 @@ export default function JungleScoreboard() {
       [teamId]: newScore
     }));
 
-    // Trigger animation
-    const animId = Date.now();
+    // Trigger animation with random position
+    const animId = Date.now() + Math.random(); // Ensure unique ID
+    const randomX = (Math.random() - 0.5) * 200; // Random X offset: -100px to +100px
+    const randomY = (Math.random() - 0.5) * 100; // Random Y offset: -50px to +50px
+    
     setAnimations(prev => ({
       ...prev,
-      [teamId]: [...prev[teamId], { id: animId, points }]
+      [teamId]: [...prev[teamId], { id: animId, points, randomX, randomY }]
     }));
 
     // Remove animation after it completes
@@ -224,8 +240,8 @@ export default function JungleScoreboard() {
             className={`${team.lightColor} rounded-3xl shadow-2xl relative overflow-hidden border-4 border-white group`}
           >
             {/* Team header */}
-            <div className={`${team.color} py-6 relative`}>
-              <h2 className="text-4xl font-bold text-white text-center drop-shadow-lg">
+            <div className={`${team.color} ${isMobile ? 'py-2' : 'py-6'} relative`}>
+              <h2 className={`${isMobile ? 'text-xl' : 'text-4xl'} font-bold text-white text-center drop-shadow-lg`}>
                 {team.animal} {team.name} {team.emoji}
               </h2>
             </div>
@@ -235,77 +251,84 @@ export default function JungleScoreboard() {
               <div 
                 className={`font-black ${team.textColor} drop-shadow-md relative z-10 leading-none pointer-events-none`}
                 style={{ 
-                  fontSize: Math.abs(scores[team.id]) >= 100 
-                    ? 'clamp(10rem, 18vw, 18rem)' 
-                    : Math.abs(scores[team.id]) >= 10 
-                    ? 'clamp(14rem, 24vw, 24rem)' 
-                    : 'clamp(16rem, 28vw, 28rem)'
+                  fontSize: isMobile 
+                    ? (Math.abs(scores[team.id]) >= 100 
+                        ? 'clamp(4rem, 12vw, 8rem)' 
+                        : Math.abs(scores[team.id]) >= 10 
+                        ? 'clamp(5rem, 15vw, 10rem)' 
+                        : 'clamp(6rem, 18vw, 12rem)')
+                    : (Math.abs(scores[team.id]) >= 100 
+                        ? 'clamp(10rem, 18vw, 18rem)' 
+                        : Math.abs(scores[team.id]) >= 10 
+                        ? 'clamp(14rem, 24vw, 24rem)' 
+                        : 'clamp(16rem, 28vw, 28rem)')
                 }}
               >
                 {scores[team.id]}
               </div>
 
-              {/* Floating animations */}
+              {/* Floating animations with random positions */}
               {animations[team.id].map(anim => (
                 <div
                   key={anim.id}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
+                  className="absolute top-1/2 left-1/2 pointer-events-none z-20"
                   style={{
-                    animation: 'floatUp 2.5s ease-out forwards'
+                    animation: 'floatUp 2.5s ease-out forwards',
+                    transform: `translate(calc(-50% + ${anim.randomX}px), calc(-50% + ${anim.randomY}px))`
                   }}
                 >
-                  <div className={`text-8xl font-bold ${anim.points > 0 ? 'text-green-600' : 'text-red-600'} drop-shadow-lg`}>
+                  <div className={`${isMobile ? 'text-4xl' : 'text-8xl'} font-bold ${anim.points > 0 ? 'text-green-600' : 'text-red-600'} drop-shadow-lg`}>
                     {anim.points > 0 ? '+' : ''}{anim.points}
                   </div>
-                  <div className="text-7xl text-center">
+                  <div className={`${isMobile ? 'text-3xl' : 'text-7xl'} text-center`}>
                     {anim.points > 0 ? '🎉' : '💨'}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Control buttons - shown on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 flex items-end justify-center pb-8">
-              <div className="w-11/12">
-                <div className="grid grid-cols-3 gap-4 mb-3">
+            {/* Control buttons - always visible on mobile, hover on desktop */}
+            <div className={`absolute inset-0 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-300 z-30 flex items-end justify-center ${isMobile ? 'pb-2' : 'pb-8'}`}>
+              <div className={`${isMobile ? 'w-full px-2' : 'w-11/12'}`}>
+                <div className={`grid grid-cols-3 ${isMobile ? 'gap-1 mb-1' : 'gap-4 mb-3'}`}>
                   <button
                     onClick={() => addPoints(team.id, 1)}
-                    className={`${team.color} hover:${team.darkColor} text-white py-8 px-6 rounded-2xl font-bold text-3xl transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={36} className="mr-2" /> 1
+                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 1
                   </button>
                   <button
                     onClick={() => addPoints(team.id, 5)}
-                    className={`${team.color} hover:${team.darkColor} text-white py-8 px-6 rounded-2xl font-bold text-3xl transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={36} className="mr-2" /> 5
+                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 5
                   </button>
                   <button
                     onClick={() => addPoints(team.id, 10)}
-                    className={`${team.color} hover:${team.darkColor} text-white py-8 px-6 rounded-2xl font-bold text-3xl transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
+                    className={`${team.color} hover:${team.darkColor} text-white ${isMobile ? 'py-3 px-2 rounded-lg text-lg' : 'py-8 px-6 rounded-2xl text-3xl'} font-bold transition-all hover:scale-110 shadow-2xl flex items-center justify-center backdrop-blur-sm bg-opacity-95`}
                   >
-                    <Plus size={36} className="mr-2" /> 10
+                    <Plus size={isMobile ? 20 : 36} className={isMobile ? 'mr-1' : 'mr-2'} /> 10
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid grid-cols-2 ${isMobile ? 'gap-1' : 'gap-3'}`}>
                   <button
                     onClick={() => addPoints(team.id, -1)}
-                    className={`${team.darkColor} hover:opacity-90 text-white py-3 px-4 rounded-xl font-semibold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
+                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-2 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
                   >
-                    <Minus size={20} className="mr-1" /> 1
+                    <Minus size={isMobile ? 16 : 20} className="mr-1" /> 1
                   </button>
                   <button
                     onClick={() => addPoints(team.id, -5)}
-                    className={`${team.darkColor} hover:opacity-90 text-white py-3 px-4 rounded-xl font-semibold text-lg transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
+                    className={`${team.darkColor} hover:opacity-90 text-white ${isMobile ? 'py-2 px-2 rounded-md text-sm' : 'py-3 px-4 rounded-xl text-lg'} font-semibold transition-all hover:scale-105 shadow-xl flex items-center justify-center backdrop-blur-sm bg-opacity-90`}
                   >
-                    <Minus size={20} className="mr-1" /> 5
+                    <Minus size={isMobile ? 16 : 20} className="mr-1" /> 5
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Decorative jungle elements */}
-            <div className="absolute bottom-0 left-0 text-6xl opacity-20">🍃</div>
+            <div className={`absolute bottom-0 left-0 ${isMobile ? 'text-3xl' : 'text-6xl'} opacity-20`}>🍃</div>
           </div>
         ))}
       </div>

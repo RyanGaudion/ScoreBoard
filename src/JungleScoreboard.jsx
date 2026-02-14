@@ -131,7 +131,7 @@ export default function JungleScoreboard() {
   const teams = [
     { 
       id: 'blue', 
-      name: 'Blue Team', 
+      name: 'Elephants', 
       color: 'bg-blue-500', 
       darkColor: 'bg-blue-700',
       lightColor: 'bg-blue-100',
@@ -141,7 +141,7 @@ export default function JungleScoreboard() {
     },
     { 
       id: 'yellow', 
-      name: 'Yellow Team', 
+      name: 'Lions', 
       color: 'bg-yellow-400', 
       darkColor: 'bg-yellow-600',
       lightColor: 'bg-yellow-50',
@@ -151,7 +151,7 @@ export default function JungleScoreboard() {
     },
     { 
       id: 'red', 
-      name: 'Red Team', 
+      name: 'Monkeys', 
       color: 'bg-red-500', 
       darkColor: 'bg-red-700',
       lightColor: 'bg-red-50',
@@ -161,7 +161,7 @@ export default function JungleScoreboard() {
     },
     { 
       id: 'green', 
-      name: 'Green Team', 
+      name: 'Crocs', 
       color: 'bg-green-500', 
       darkColor: 'bg-green-700',
       lightColor: 'bg-green-50',

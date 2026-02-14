@@ -287,7 +287,7 @@ export default function JungleScoreboard() {
                     {anim.points > 0 ? '+' : ''}{anim.points}
                   </div>
                   <div className={`${isMobile ? 'text-3xl' : 'text-7xl'} text-center`}>
-                    {anim.points > 0 ? '🎉' : '💨'}
+                    {anim.points > 0 ? '🎉' : '👎'}
                   </div>
                 </div>
               ))}
